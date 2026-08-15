@@ -399,3 +399,22 @@ footer{border-top:1px solid var(--hair);padding:60px var(--gut) 46px;background:
   .scrollcue .rail::after{animation:none}
   #field{opacity:.4}
 }
+
+/* ============================================================================
+   LARGE-SCREEN TIER — let 2K / 4K / ultrawide own the canvas.
+   Root font-size drives every rem/ch (fonts, gaps, line-lengths); the shared
+   content containers widen in step. Full-bleed hero video is unaffected.
+   ========================================================================= */
+@media (min-width:1920px){
+  :root{ --gut:clamp(40px,4.2vw,120px); }
+  html{ font-size:17.5px; }
+  .wrap,.proof-inner,.proof-ui,.dom-head{ max-width:1680px; }
+}
+@media (min-width:2560px){
+  html{ font-size:20px; }
+  .wrap,.proof-inner,.proof-ui,.dom-head{ max-width:2100px; }
+}
+@media (min-width:3200px){
+  html{ font-size:23px; }
+  .wrap,.proof-inner,.proof-ui,.dom-head{ max-width:2560px; }
+}
