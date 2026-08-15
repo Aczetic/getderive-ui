@@ -38,9 +38,9 @@ export const MARKUP = String.raw`
   <!-- ===== hero ===== -->
   <section id="hero">
     <div class="wrap">
-      <span class="kicker hero-eyebrow">AI-Managed Operations</span>
-      <h1 class="display" aria-label="AI-Managed Operations for Tax Teams">
-        <span class="hero-line"><span class="w">AI-Managed</span></span>
+      <span class="kicker hero-eyebrow">Managed Operations</span>
+      <h1 class="display" aria-label="Managed Operations for Tax Teams">
+        <span class="hero-line"><span class="w">Managed</span></span>
         <span class="hero-line"><span class="w">Operations for</span></span>
         <span class="hero-line"><span class="w em">Tax Teams.</span></span>
       </h1>
@@ -238,7 +238,7 @@ export const MARKUP = String.raw`
   <!-- ===== explainer ===== -->
   <section class="explain obs">
     <div class="wrap">
-      <h3 class="rise">What is AI-Managed Operations?</h3>
+      <h3 class="rise">What is Managed Operations?</h3>
       <div class="rise">
         <p><span class="em2">A new operating model for enterprise tax teams.</span> Derive combines AI agents, tax specialists, and your existing team into a single managed-operations model. AI agents execute work, specialists provide domain expertise and oversight, and your team retains control of critical decisions and approvals.</p>
       </div>
@@ -257,7 +257,7 @@ export const MARKUP = String.raw`
           </svg>
           <span class="wm">Derive</span>
         </a>
-        <p>AI-Managed Operations for Tax Teams. One operating model of agents, specialists, and your team.</p>
+        <p>Managed Operations for Tax Teams. One operating model of agents, specialists, and your team.</p>
       </div>
       <div class="foot-cols">
         <div class="foot-col"><h4>Product</h4>
