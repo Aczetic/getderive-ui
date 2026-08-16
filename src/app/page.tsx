@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useRef } from "react";
 import { MARKUP } from "./siteMarkup";
+import BentoObjects from "./BentoObjects";
 
 // Faithful port of derive-site/index.html: the markup is injected verbatim, then the
 // original vendor libs (gsap -> ScrollTrigger -> lenis) and the ported inline scripts
@@ -30,5 +31,10 @@ export default function Home() {
     loadNext();
   }, []);
 
-  return <div id="site-root" dangerouslySetInnerHTML={{ __html: MARKUP }} />;
+  return (
+    <>
+      <div id="site-root" dangerouslySetInnerHTML={{ __html: MARKUP }} />
+      <BentoObjects />
+    </>
+  );
 }
