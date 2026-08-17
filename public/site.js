@@ -219,19 +219,19 @@
 
     var mm = gsap.matchMedia();
     mm.add('(min-width: 861px)', function(){
-      var proof = ScrollTrigger.create({
+      var proof = document.querySelector('#proof') ? ScrollTrigger.create({
         trigger:'#proof', start:'top top', end:'+=2000%', pin:'.proof3d', scrub:true,
         onUpdate:function(self){ PF.flow = Math.max(0, Math.min(4, self.progress*4.25 - 0.12)); proofUI();
           if(window.__film) window.__film.render(self.progress*window.__film.END); },
         onRefresh:function(self){ proofUI(); if(window.__film){ window.__film.measure(); window.__film.render(self.progress*window.__film.END); } }
-      });
+      }) : null;
       var track = document.getElementById('dtrack');
       var dom = ScrollTrigger.create({
         trigger:'#domains', start:'top top', end:function(){ return '+='+(track.scrollWidth - innerWidth + innerWidth*0.05); },
         pin:true, scrub:0.55, invalidateOnRefresh:true,
         onUpdate:function(self){ gsap.set(track,{ x: -(track.scrollWidth - innerWidth) * self.progress }); }
       });
-      return function(){ proof.kill(); dom.kill(); gsap.set(track,{x:0}); };
+      return function(){ if(proof) proof.kill(); dom.kill(); gsap.set(track,{x:0}); };
     });
     mm.add('(max-width: 860px)', function(){
       PF.flow=1;
