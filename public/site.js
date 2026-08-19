@@ -268,7 +268,7 @@
     var io = new IntersectionObserver(function(es){
       es.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); } });
     }, { rootMargin:'0px 0px -12% 0px', threshold:0.1 });
-    document.querySelectorAll('#gap .wrap, #intro .wrap, #why .wrap, #domains .dom-head, #close .wrap, .explain .wrap')
+    document.querySelectorAll('#intro .wrap, .statband .wrap, #domains .dom-head, #close .wrap')
       .forEach(function(s){ s.classList.add('obsblock'); io.observe(s); });
 
     ScrollTrigger.refresh();

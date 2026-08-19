@@ -17,11 +17,7 @@ export const MARKUP = String.raw`
 <!-- ===== header ===== -->
 <header class="hdr" id="hdr">
   <a class="brand" href="#top" aria-label="Derive home">
-    <svg viewBox="0 0 32 32" aria-hidden="true">
-      <path d="M4 8c8 0 8 8 16 8" fill="none" stroke="var(--emerald)" stroke-width="2" stroke-linecap="round"/>
-      <path d="M4 16c8 0 8 5 16 5" fill="none" stroke="var(--gold)" stroke-width="2" stroke-linecap="round"/>
-      <path d="M4 24c8 0 11-8 24-8" fill="none" stroke="var(--ivory)" stroke-width="2" stroke-linecap="round"/>
-    </svg>
+    <svg viewBox="0 0 7 24" aria-hidden="true"><line x1="3.5" y1="2" x2="3.5" y2="22" stroke="var(--ivory)" stroke-opacity="0.16" stroke-width="1.2" stroke-linecap="round"/><circle cx="3.5" cy="3.5" r="3" fill="var(--ivory)"/><circle cx="3.5" cy="12" r="3" fill="var(--ivory)"/><circle cx="3.5" cy="20.5" r="3" fill="var(--ivory)"/></svg>
     <span class="wm">Derive</span>
   </a>
   <nav class="nav">
@@ -66,6 +62,9 @@ export const MARKUP = String.raw`
       <p class="body rise" style="margin-top:18px;color:var(--ivory)">Instead of giving teams another tool, Derive becomes an <span class="em">operational layer</span> that helps work get done.</p>
     </div>
   </section>
+  
+  
+  
 
   <!-- ===== proof scene — 3D: the chain of custody of Row 07 ===== -->
   
@@ -124,11 +123,7 @@ export const MARKUP = String.raw`
     <div class="foot-top">
       <div class="foot-brand">
         <a class="brand" href="#top" aria-label="Derive home">
-          <svg viewBox="0 0 32 32" aria-hidden="true">
-            <path d="M4 8c8 0 8 8 16 8" fill="none" stroke="var(--emerald)" stroke-width="2" stroke-linecap="round"/>
-            <path d="M4 16c8 0 8 5 16 5" fill="none" stroke="var(--gold)" stroke-width="2" stroke-linecap="round"/>
-            <path d="M4 24c8 0 11-8 24-8" fill="none" stroke="var(--ivory)" stroke-width="2" stroke-linecap="round"/>
-          </svg>
+          <svg viewBox="0 0 7 24" aria-hidden="true"><line x1="3.5" y1="2" x2="3.5" y2="22" stroke="var(--ivory)" stroke-opacity="0.16" stroke-width="1.2" stroke-linecap="round"/><circle cx="3.5" cy="3.5" r="3" fill="var(--ivory)"/><circle cx="3.5" cy="12" r="3" fill="var(--ivory)"/><circle cx="3.5" cy="20.5" r="3" fill="var(--ivory)"/></svg>
           <span class="wm">Derive</span>
         </a>
         <p>Managed Operations for Tax Teams. One operating model of agents, specialists, and your team.</p>
