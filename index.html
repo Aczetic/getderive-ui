@@ -4,6 +4,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Derive - Managed Operations for Tax Teams</title>
+<script>
+/* PERF BISECT - temporary. Stops the section-2 brain render loop (Ru) on phones
+   while leaving its init, the SVG platform, the tiles and the labels alone, so
+   only the WebGL cost goes away and nothing shifts. The hero sphere runs as
+   normal. Flip this to isolate which canvas is actually costing the frames;
+   delete the flag and the `if(window.__NOBRAIN)return;` guard in Ru when done. */
+window.__NOBRAIN = innerWidth<=900 && matchMedia('(pointer:coarse)').matches;
+</script>
 <meta name="description" content="Derive brings together AI agents, tax specialists, and your team in a single operating model to execute tax work with speed, consistency, and control.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230A0F0D'/%3E%3Ccircle cx='16' cy='9' r='3' fill='%23F3EFE4'/%3E%3Ccircle cx='16' cy='16' r='3' fill='%23F3EFE4'/%3E%3Ccircle cx='16' cy='23' r='3' fill='%23F3EFE4'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -33,7 +41,11 @@
 html{-webkit-text-size-adjust:100%;overflow-x:hidden}
 body{
   background:var(--ink); color:var(--ivory); font-family:var(--sans);
-  font-weight:400; line-height:1.5; overflow-x:hidden;
+  /* No overflow-x here. html already carries it, and the root's value is what
+     propagates to the viewport. Setting it on body as well makes body its own
+     scroll container - one hidden axis forces the other from visible to auto -
+     which nests a second scroller inside the viewport and fights Lenis. */
+  font-weight:400; line-height:1.5;
   -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
 }
 a{color:inherit;text-decoration:none}
@@ -345,15 +357,22 @@ section{position:relative}
   .hero-visual{order:2;justify-self:center;width:100%;max-width:min(94vw,520px);
     max-height:none;margin-left:0}
   .hero-visual #gl{transform:translateY(20px) scale(1.8);transform-origin:50% 50%}
-  /* Sphere is hidden outright on phones - the script above never builds it.
-     visibility:hidden on the canvas, and the wrapper is collapsed as well
-     because it is aspect-ratio 1/1 at up to 520px wide, so leaving it in flow
-     would park a ~390px empty square in the middle of the hero. */
-  .hero-visual{display:none}
-  .hero-visual #gl{visibility:hidden}
   /* nav CTA at 90%; padding is in em so it scales with the font size, shrinking
      the whole button. The hero and closing CTAs track it so all three match. */
   .btn.sm,.hero-cta .btn,#close .btn.big{font-size:12.6px}
+  /* THE horizontal-overflow fix. Blob 2 sits at right:0 and leakB translates it
+     a further +16vw right. Transformed boxes DO count toward scrollable overflow
+     (CSS Overflow 3: the region is the union of descendant border boxes after
+     transform), so the document was ~16vw wider than the viewport - the earlier
+     "move the offset into the transform" change did nothing. That extra width is
+     what makes the page scroll sideways, and because mobile browsers widen the
+     layout viewport to match the document, it also stretches the fixed .hdr
+     (left:0;right:0) past the screen and carries its right-aligned CTA off the
+     edge. Keeping this blob's drift leftward fixes both at once. Desktop keeps
+     the original overhang - it is clipped fine there. */
+  #leaks i:nth-child(2){right:6vw;animation-name:leakBm}
+  @keyframes leakBm{from{transform:translate3d(0,0,0) scale(1)}
+    to{transform:translate3d(-8vw,-6vh,0) scale(1.12)}}
   /* keep the bar's two items from overrunning a narrow viewport */
   .hdr{gap:12px}
   .brand{flex:0 1 auto;min-width:0}
@@ -2071,14 +2090,6 @@ body.editing #om .tile{box-shadow:inset 0 1px 1px rgba(255,255,255,.5),0 0 0 1px
 <script>
 (function(){
   if (matchMedia('(prefers-reduced-motion:reduce)').matches) return;
-  /* Phones do not run this at all. Real handsets are 5x the pixels of a
-     narrowed desktop window on a GPU an order of magnitude slower, and the
-     shader is fill-rate bound - no resolution or step-count tuning got it to
-     frame. Returning here (rather than hiding the canvas in CSS) is what
-     actually costs nothing: no WebGL context, no shader compile, no
-     ping-pong textures, no rAF loop. Same touch gate resize() uses, so a
-     narrow desktop window still gets the full sphere. */
-  if (innerWidth<=900 && matchMedia('(pointer:coarse)').matches) return;
   var cvEl=document.getElementById('gl'); if(!cvEl) return;
   requestAnimationFrame(function(){ cvEl.classList.add('lit'); });
 
@@ -6989,7 +7000,7 @@ void main() {
     float a = clamp(s.a + dot(bl, vec3(1.25)), 0.0, 1.0);
     float d = fract(dot(gl_FragCoord.xy, vec2(0.7548776662,0.5698402909)));
     gl_FragColor = vec4(c*a + (d-0.5)/255.0, a);
-  }`,Ls);Us.mat.transparent=!0;Us.mat.blending=sc;Us.mat.blendSrc=rc;Us.mat.blendDst=ds;var Cs=2,Ps=2;function oa(){let i=cn.getBoundingClientRect();if(i.width<2||i.height<2)return;let e=Math.min(devicePixelRatio||1,2)*ve.scale;Cs=Math.max(2,Math.round(i.width*e)),Ps=Math.max(2,Math.round(i.height*e)),ct.setPixelRatio(1),ct.setSize(Cs,Ps,!1),cn.style.width="100%",cn.style.height="100%",jn.aspect=i.width/i.height,jn.updateProjectionMatrix(),ia.setSize(Cs,Ps),di.setSize(Math.max(2,Cs>>1),Math.max(2,Ps>>1)),el.setSize(Math.max(2,Cs>>1),Math.max(2,Ps>>1))}new ResizeObserver(oa).observe(cn);var Ds=null,ea=null,nl=null,il=new Zr;il.setMeshoptDecoder(uu);function sl(i){console.error(i),Qc.classList.remove("gone"),Qc.textContent="Render failed \u2014 see console"}function _u(i){try{i.scene.traverse(e=>{if(!e.isMesh)return;let t=e.geometry.getAttribute("color");t&&(e.geometry.setAttribute("aCav",t),e.geometry.deleteAttribute("color")),e.geometry.computeVertexNormals(),e.material=wu,e.frustumCulled=!1,nl=e}),ea=new Wt,ea.add(i.scene),Zi.add(ea),Ds=ea,oa(),Qc.classList.add("gone")}catch(e){sl(e)}}if(typeof Kc=="string"&&Kc.length>64){let i=atob(Kc),e=new Uint8Array(i.length);for(let t=0;t<i.length;t++)e[t]=i.charCodeAt(t);il.parse(e.buffer,"",_u,sl)}else il.load("./brain2.glb",_u,void 0,sl);var Ns={x:0,y:0},ca=!1,rl=0,al=0;cn.addEventListener("pointerdown",i=>{ca=!0,rl=i.clientX,al=i.clientY,cn.setPointerCapture(i.pointerId)});cn.addEventListener("pointerup",()=>ca=!1);cn.addEventListener("pointercancel",()=>ca=!1);cn.addEventListener("pointermove",i=>{ca&&(Ns.x+=(i.clientX-rl)*.008,Ns.y=Math.max(-.35,Math.min(.35,Ns.y+(i.clientY-al)*.003)),rl=i.clientX,al=i.clientY)});var Jc=matchMedia("(prefers-reduced-motion: reduce)"),Eu=!0,Tu=!document.hidden;new IntersectionObserver(i=>{Eu=i[0].isIntersecting},{threshold:.02}).observe(cn);document.addEventListener("visibilitychange",()=>{Tu=!document.hidden,sa=performance.now()});var gb=new ye,xu=new Ce,sa=performance.now(),vu=0,ta=0,Zc=0,bb=document.getElementById("fps");function Ru(i){if(requestAnimationFrame(Ru),!Eu||!Tu||!Ds||!nl){sa=i;return}let e=Math.min((i-sa)/1e3,.05);sa=i,!Jc.matches&&!na&&(vu+=e);let t=Jc.matches?6:vu;ta+=e,Zc++,ta>.5&&(bb&&(bb.textContent=Math.round(Zc/ta)+" fps"),ta=0,Zc=0);let n=t%ve.breathe/ve.breathe,s=Jc.matches?.65:n<.45?Math.pow(n/.45,.85):Math.pow(1-(n-.45)/.55,1.35);jn.position.set(0,0,ve.dist),jn.lookAt(0,0,0),Ds.rotation.set(ve.tilt+Ns.y,ve.baseYaw+ve.sway*Math.sin(t*ve.swaySpd)+Ns.x,0),Ds.position.set(ve.posX,ve.posY-ve.bob*Math.sin(t*.42),0);let r=wu.uniforms;r.uIOR.value=ve.ior,r.uDisp.value=ve.disp,r.uReflI.value=ve.reflI,r.uRefrI.value=ve.refrI,r.uAbsorb.value=ve.absorb,r.uFresP.value=ve.fresP,r.uAlpha.value=ve.alpha,r.uSpecI.value=ve.specI,r.uShine.value=ve.shine,r.uBars.value=ve.bars,r.uBarW.value=ve.barW,r.uSky.value=ve.sky,r.uKey.value=ve.key,r.uSpread.value=ve.spread,r.uCenter.value.copy(Ds.position),r.uFacetK.value=ve.facetK,r.uFacetMix.value=ve.facetMix,r.uFacetE.value=ve.facetE,r.uFacetW.value=ve.facetW,Zi.updateMatrixWorld(!0),jn.updateMatrixWorld(),xu.multiplyMatrices(jn.matrixWorldInverse,nl.matrixWorld),r.uNM.value.getNormalMatrix(xu),r.uThr.value=ve.thr,r.uSoft.value=ve.soft,r.uCurve.value=ve.curve,r.uGlowI.value=ve.glowI,r.uCoreI.value=ve.coreI,r.uCoreT.value=ve.coreT,r.uPulse.value=s,r.uGlowCol.value.copy(gb.setHSL(ve.hue,.84,.44)),ct.setRenderTarget(ia),ct.setClearAlpha(0),ct.clear(),ct.autoClear=!1,Zi.overrideMaterial=fb,ct.render(Zi,jn),Zi.overrideMaterial=null,ct.render(Zi,jn),ct.autoClear=!0,tl.uTex.value=ia.texture,tl.uThr.value=ve.bthr,ct.setRenderTarget(di),ct.render(mb.scene,$r),fi.uTexel.value.set(1/di.width,1/di.height),fi.uRad.value=ve.brad,fi.uTex.value=di.texture,fi.uDir.value.set(1,0),ct.setRenderTarget(el),ct.render(bu.scene,$r),fi.uTex.value=el.texture,fi.uDir.value.set(0,1),ct.setRenderTarget(di),ct.render(bu.scene,$r),Ls.uScene.value=ia.texture,Ls.uBloom.value=di.texture,Ls.uAmt.value=ve.bamt*(.72+.5*s),Ls.uExpo.value=ve.expo,ct.setRenderTarget(null),ct.setClearAlpha(0),ct.clear(),ct.render(Us.scene,$r)}requestAnimationFrame(Ru);})();
+  }`,Ls);Us.mat.transparent=!0;Us.mat.blending=sc;Us.mat.blendSrc=rc;Us.mat.blendDst=ds;var Cs=2,Ps=2;function oa(){let i=cn.getBoundingClientRect();if(i.width<2||i.height<2)return;let e=Math.min(devicePixelRatio||1,2)*ve.scale;Cs=Math.max(2,Math.round(i.width*e)),Ps=Math.max(2,Math.round(i.height*e)),ct.setPixelRatio(1),ct.setSize(Cs,Ps,!1),cn.style.width="100%",cn.style.height="100%",jn.aspect=i.width/i.height,jn.updateProjectionMatrix(),ia.setSize(Cs,Ps),di.setSize(Math.max(2,Cs>>1),Math.max(2,Ps>>1)),el.setSize(Math.max(2,Cs>>1),Math.max(2,Ps>>1))}new ResizeObserver(oa).observe(cn);var Ds=null,ea=null,nl=null,il=new Zr;il.setMeshoptDecoder(uu);function sl(i){console.error(i),Qc.classList.remove("gone"),Qc.textContent="Render failed \u2014 see console"}function _u(i){try{i.scene.traverse(e=>{if(!e.isMesh)return;let t=e.geometry.getAttribute("color");t&&(e.geometry.setAttribute("aCav",t),e.geometry.deleteAttribute("color")),e.geometry.computeVertexNormals(),e.material=wu,e.frustumCulled=!1,nl=e}),ea=new Wt,ea.add(i.scene),Zi.add(ea),Ds=ea,oa(),Qc.classList.add("gone")}catch(e){sl(e)}}if(typeof Kc=="string"&&Kc.length>64){let i=atob(Kc),e=new Uint8Array(i.length);for(let t=0;t<i.length;t++)e[t]=i.charCodeAt(t);il.parse(e.buffer,"",_u,sl)}else il.load("./brain2.glb",_u,void 0,sl);var Ns={x:0,y:0},ca=!1,rl=0,al=0;cn.addEventListener("pointerdown",i=>{ca=!0,rl=i.clientX,al=i.clientY,cn.setPointerCapture(i.pointerId)});cn.addEventListener("pointerup",()=>ca=!1);cn.addEventListener("pointercancel",()=>ca=!1);cn.addEventListener("pointermove",i=>{ca&&(Ns.x+=(i.clientX-rl)*.008,Ns.y=Math.max(-.35,Math.min(.35,Ns.y+(i.clientY-al)*.003)),rl=i.clientX,al=i.clientY)});var Jc=matchMedia("(prefers-reduced-motion: reduce)"),Eu=!0,Tu=!document.hidden;new IntersectionObserver(i=>{Eu=i[0].isIntersecting},{threshold:.02}).observe(cn);document.addEventListener("visibilitychange",()=>{Tu=!document.hidden,sa=performance.now()});var gb=new ye,xu=new Ce,sa=performance.now(),vu=0,ta=0,Zc=0,bb=document.getElementById("fps");function Ru(i){if(window.__NOBRAIN)return;if(requestAnimationFrame(Ru),!Eu||!Tu||!Ds||!nl){sa=i;return}let e=Math.min((i-sa)/1e3,.05);sa=i,!Jc.matches&&!na&&(vu+=e);let t=Jc.matches?6:vu;ta+=e,Zc++,ta>.5&&(bb&&(bb.textContent=Math.round(Zc/ta)+" fps"),ta=0,Zc=0);let n=t%ve.breathe/ve.breathe,s=Jc.matches?.65:n<.45?Math.pow(n/.45,.85):Math.pow(1-(n-.45)/.55,1.35);jn.position.set(0,0,ve.dist),jn.lookAt(0,0,0),Ds.rotation.set(ve.tilt+Ns.y,ve.baseYaw+ve.sway*Math.sin(t*ve.swaySpd)+Ns.x,0),Ds.position.set(ve.posX,ve.posY-ve.bob*Math.sin(t*.42),0);let r=wu.uniforms;r.uIOR.value=ve.ior,r.uDisp.value=ve.disp,r.uReflI.value=ve.reflI,r.uRefrI.value=ve.refrI,r.uAbsorb.value=ve.absorb,r.uFresP.value=ve.fresP,r.uAlpha.value=ve.alpha,r.uSpecI.value=ve.specI,r.uShine.value=ve.shine,r.uBars.value=ve.bars,r.uBarW.value=ve.barW,r.uSky.value=ve.sky,r.uKey.value=ve.key,r.uSpread.value=ve.spread,r.uCenter.value.copy(Ds.position),r.uFacetK.value=ve.facetK,r.uFacetMix.value=ve.facetMix,r.uFacetE.value=ve.facetE,r.uFacetW.value=ve.facetW,Zi.updateMatrixWorld(!0),jn.updateMatrixWorld(),xu.multiplyMatrices(jn.matrixWorldInverse,nl.matrixWorld),r.uNM.value.getNormalMatrix(xu),r.uThr.value=ve.thr,r.uSoft.value=ve.soft,r.uCurve.value=ve.curve,r.uGlowI.value=ve.glowI,r.uCoreI.value=ve.coreI,r.uCoreT.value=ve.coreT,r.uPulse.value=s,r.uGlowCol.value.copy(gb.setHSL(ve.hue,.84,.44)),ct.setRenderTarget(ia),ct.setClearAlpha(0),ct.clear(),ct.autoClear=!1,Zi.overrideMaterial=fb,ct.render(Zi,jn),Zi.overrideMaterial=null,ct.render(Zi,jn),ct.autoClear=!0,tl.uTex.value=ia.texture,tl.uThr.value=ve.bthr,ct.setRenderTarget(di),ct.render(mb.scene,$r),fi.uTexel.value.set(1/di.width,1/di.height),fi.uRad.value=ve.brad,fi.uTex.value=di.texture,fi.uDir.value.set(1,0),ct.setRenderTarget(el),ct.render(bu.scene,$r),fi.uTex.value=el.texture,fi.uDir.value.set(0,1),ct.setRenderTarget(di),ct.render(bu.scene,$r),Ls.uScene.value=ia.texture,Ls.uBloom.value=di.texture,Ls.uAmt.value=ve.bamt*(.72+.5*s),Ls.uExpo.value=ve.expo,ct.setRenderTarget(null),ct.setClearAlpha(0),ct.clear(),ct.render(Us.scene,$r)}requestAnimationFrame(Ru);})();
 /*! Bundled license information:
 
 three/build/three.module.js:
