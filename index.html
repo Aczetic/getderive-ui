@@ -345,6 +345,12 @@ section{position:relative}
   .hero-visual{order:2;justify-self:center;width:100%;max-width:min(94vw,520px);
     max-height:none;margin-left:0}
   .hero-visual #gl{transform:translateY(20px) scale(1.8);transform-origin:50% 50%}
+  /* Sphere is hidden outright on phones - the script above never builds it.
+     visibility:hidden on the canvas, and the wrapper is collapsed as well
+     because it is aspect-ratio 1/1 at up to 520px wide, so leaving it in flow
+     would park a ~390px empty square in the middle of the hero. */
+  .hero-visual{display:none}
+  .hero-visual #gl{visibility:hidden}
   /* nav CTA at 90%; padding is in em so it scales with the font size, shrinking
      the whole button. The hero and closing CTAs track it so all three match. */
   .btn.sm,.hero-cta .btn,#close .btn.big{font-size:12.6px}
@@ -2065,6 +2071,14 @@ body.editing #om .tile{box-shadow:inset 0 1px 1px rgba(255,255,255,.5),0 0 0 1px
 <script>
 (function(){
   if (matchMedia('(prefers-reduced-motion:reduce)').matches) return;
+  /* Phones do not run this at all. Real handsets are 5x the pixels of a
+     narrowed desktop window on a GPU an order of magnitude slower, and the
+     shader is fill-rate bound - no resolution or step-count tuning got it to
+     frame. Returning here (rather than hiding the canvas in CSS) is what
+     actually costs nothing: no WebGL context, no shader compile, no
+     ping-pong textures, no rAF loop. Same touch gate resize() uses, so a
+     narrow desktop window still gets the full sphere. */
+  if (innerWidth<=900 && matchMedia('(pointer:coarse)').matches) return;
   var cvEl=document.getElementById('gl'); if(!cvEl) return;
   requestAnimationFrame(function(){ cvEl.classList.add('lit'); });
 
@@ -2818,37 +2832,24 @@ cv.addEventListener('pointermove',e=>{if(!dg)return;
   drag.x+=(e.clientX-lx)*0.006;drag.y+=(e.clientY-ly)*0.005;
   drag.y=Math.max(-1.25,Math.min(1.25,drag.y));lx=e.clientX;ly=e.clientY;});
 
-let W=0,H=0,QUAL=1.0,RES=1.0,MOB=false;
+let W=0,H=0,QUAL=1.0;
 const BUDGET=2.4e6;
 function resize(){
+  /* On narrow viewports the sphere box is far smaller in CSS px, so it sits well
+     under the pixel budget and is limited by DPR alone - there is headroom to
+     render sharper. The adaptive QUAL loop below still pulls step counts down if
+     a given phone cannot keep up. */
   /* width alone is not enough: a narrow desktop window (DevTools open, split
      screen) would otherwise pick up the mobile resolution boost. Require a
-     coarse pointer so this is genuinely touch devices only.
-
-     Note this gate is also why a phone and a narrowed desktop window are NOT
-     comparable: emulation stays on the 1.75*0.729 path and renders ~5x fewer
-     pixels than a real DPR-3 handset, on a GPU that is an order of magnitude
-     faster per pixel. Never size this shader against DevTools. */
+     coarse pointer so this is genuinely touch devices only. */
   const _mob=innerWidth<=900&&matchMedia('(pointer:coarse)').matches;
-  MOB=_mob;
-  /* 2.0 rather than 3.0 on touch: across a ~387px CSS box that is still a 2x
-     supersample and indistinguishable, at 2.25x less fragment work. RES then
-     adapts down from here on whatever the device can actually sustain.
-
-     RES is pinned to 1.0 off touch (see the frame loop), so the desktop
-     expression stays exactly Math.min(dpr,1.75)*0.729 as before. */
-  const dpr=Math.min(devicePixelRatio||1,_mob?2.0:1.75)*(_mob?1.0:0.729)*(_mob?RES:1.0);
+  const dpr=Math.min(devicePixelRatio||1,_mob?3.0:1.75)*(_mob?1.0:0.729);
   const box=cv.parentNode.getBoundingClientRect();
   const cw=Math.max(2,box.width), chh=Math.max(2,box.height);
   cv.style.width=cw+'px';cv.style.height=chh+'px';
   let w=cw*dpr,h=chh*dpr;
   const o=(w*h)/BUDGET; if(o>1){const k=Math.sqrt(o);w/=k;h/=k;}
-  const nW=Math.max(2,Math.round(w)),nH=Math.max(2,Math.round(h));
-  /* assigning canvas.width clears the drawing buffer even when the value is
-     unchanged, and the adaptive loop calls resize() speculatively - so only
-     touch it on a real change. size() already early-outs the same way. */
-  if(nW===W&&nH===H)return;
-  W=nW;H=nH;
+  W=Math.max(2,Math.round(w));H=Math.max(2,Math.round(h));
   cv.width=W;cv.height=H;
   size(tS,W,H);size(tD,W,H);
   const bw=Math.max(2,W>>1),bh=Math.max(2,H>>1);
@@ -2864,7 +2865,7 @@ function draw(g,w,h){gl.bindFramebuffer(gl.FRAMEBUFFER,g?g.fbo:null);gl.viewport
 function bind(t,u){gl.activeTexture(gl.TEXTURE0+u);gl.bindTexture(gl.TEXTURE_2D,t);}
 
 const impBuf=new Float32Array(16);
-let last=performance.now(),fa=0,fn=0,fw=0;
+let last=performance.now(),fa=0,fn=0;
 function frame(now){
   if(!SEQ_ON){ last=now; requestAnimationFrame(frame); return; }
   const dt=Math.min((now-last)/1000,0.05);last=now;
@@ -2879,32 +2880,8 @@ function frame(now){
 
   fa+=dt;fn++;
   if(fa>0.5){const fps=fn/fa;
-    if(!MOB){
-      /* desktop: unchanged from the tuned original. RES is pinned at 1.0 here
-         and resolution never moves, so the desktop view stays exactly as it
-         was signed off. */
-      if(fps<40)QUAL=Math.max(0.55,QUAL-0.06);
-      else if(fps>56)QUAL=Math.min(1.0,QUAL+0.03);
-    }else if(++fw>2){
-      /* touch only. This shader is fill-rate and bandwidth bound, not step
-         bound - 6 fullscreen passes over RGBA16F targets, and a tile-based
-         mobile GPU flushes tile memory to RAM on every one of those FBO
-         switches. Trimming QUAL alone floors at 0.55 and still misses frame
-         because it scales the wrong term, so give up resolution first (a
-         quadratic saving, and the box is supersampled to begin with) and only
-         start cutting march steps once RES has bottomed out. Recover in the
-         reverse order, and at half the step size so it settles instead of
-         oscillating across the 40/56 band.
-         fw skips the first ~1.5s: shader compile and first-frame hitches would
-         otherwise slam RES straight to the floor before anything has warmed. */
-      if(fps<40){
-        if(RES>0.6){RES=Math.max(0.6,RES-0.12);resize();}
-        else QUAL=Math.max(0.55,QUAL-0.06);
-      }else if(fps>56){
-        if(QUAL<1.0)QUAL=Math.min(1.0,QUAL+0.03);
-        else if(RES<1.0){RES=Math.min(1.0,RES+0.06);resize();}
-      }
-    }
+    if(fps<40)QUAL=Math.max(0.55,QUAL-0.06);
+    else if(fps>56)QUAL=Math.min(1.0,QUAL+0.03);
     fa=0;fn=0;}
 
   /* live impact dents: a damped ripple recorded in the blob's own frame,
