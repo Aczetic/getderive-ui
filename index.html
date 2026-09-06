@@ -12,12 +12,16 @@
      __NOSPHERE returns out of the hero IIFE before getContext('webgl2'), so
                 there is no context, no shader compile, no ping-pong targets
                 and no rAF - the canvas is left visibility:hidden.
-   If it still lags with both off, the cost is not WebGL and we look at the
-   scroll pins / blur filters / image payload next.
+     __NOCOINS  same, for the raymarched glass coins behind #close (#lattice).
+   With all three off the page runs zero WebGL of its own. If it STILL lags,
+   the cost is not WebGL at all and the next suspects are the 17 backdrop-filter
+   rules, the blur(90px) leak blobs, and the scroll pinning.
    To undo: delete this block, the `if(window.__NOBRAIN)return;` guard in Ru,
-   and the __NOSPHERE guard at the top of the hero sequence IIFE. */
+   the __NOSPHERE guard at the top of the hero sequence IIFE, and the __NOCOINS
+   guard at the top of the glass-coins IIFE. */
 window.__NOBRAIN  = innerWidth<=900 && matchMedia('(pointer:coarse)').matches;
 window.__NOSPHERE = window.__NOBRAIN;
+window.__NOCOINS  = window.__NOBRAIN;
 </script>
 <meta name="description" content="Derive brings together AI agents, tax specialists, and your team in a single operating model to execute tax work with speed, consistency, and control.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230A0F0D'/%3E%3Ccircle cx='16' cy='9' r='3' fill='%23F3EFE4'/%3E%3Ccircle cx='16' cy='16' r='3' fill='%23F3EFE4'/%3E%3Ccircle cx='16' cy='23' r='3' fill='%23F3EFE4'/%3E%3C/svg%3E">
@@ -7075,6 +7079,11 @@ three/build/three.module.js:
    reach. Pixels that miss every disc cost three instructions and bail. */
 (function(){
   var cv=document.getElementById('lattice'); if(!cv) return;
+  /* PERF BISECT - temporary, see the __NOCOINS note in <head>. Must sit above
+     getContext: returning here means no context, no shader compile, no glyph
+     atlas and no rAF. #lattice is opacity:0 / pointer-events:none decoration
+     behind #close, so hiding it leaves the section's layout untouched. */
+  if (window.__NOCOINS){ cv.style.visibility='hidden'; return; }
   var gl=cv.getContext('webgl',{alpha:true,antialias:false,premultipliedAlpha:true});
   if(!gl) return;
   var RM=matchMedia('(prefers-reduced-motion:reduce)').matches;
